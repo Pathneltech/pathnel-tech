@@ -16,7 +16,7 @@ export default function Cart() {
     </div>
   );
 
-  const shipping = total >= 50 ? 0 : 7.99;
+  const shipping = total >= 50000 ? 0 : 2500;
 
   return (
     <>
@@ -40,7 +40,7 @@ export default function Cart() {
                       <img className="cart-item-img" src={item.image_url || 'https://images.unsplash.com/photo-1518717758536-85ae29035b6d?w=200&q=80'} alt={item.name} />
                       <div>
                         <div className="cart-item-name">{item.name}</div>
-                        <div className="cart-item-price">${price.toFixed(2)} each</div>
+                        <div className="cart-item-price">₦{price.toLocaleString('en-NG')} each</div>
                         <div className="cart-item-controls" style={{marginTop:10}}>
                           <div className="qty-control">
                             <button className="qty-btn" onClick={() => dispatch({ type: 'UPDATE_QTY', id: item.id, qty: item.qty - 1 })}>−</button>
@@ -51,7 +51,7 @@ export default function Cart() {
                         </div>
                       </div>
                       <div style={{fontWeight:700, fontSize:17, whiteSpace:'nowrap'}}>
-                        ${(price * item.qty).toFixed(2)}
+                        ₦{(price * item.qty).toLocaleString('en-NG')}
                       </div>
                     </div>
                   );
@@ -66,20 +66,20 @@ export default function Cart() {
                 return (
                   <div key={item.id} className="summary-row">
                     <span>{item.name} × {item.qty}</span>
-                    <span>${(price * item.qty).toFixed(2)}</span>
+                    <span>₦{(price * item.qty).toLocaleString('en-NG')}</span>
                   </div>
                 );
               })}
               <div className="summary-row">
                 <span>Shipping</span>
                 <span style={{color: shipping === 0 ? 'var(--green)' : 'inherit'}}>
-                  {shipping === 0 ? 'FREE' : `$${shipping.toFixed(2)}`}
+                  {shipping === 0 ? 'FREE' : `₦${shipping.toLocaleString('en-NG')}`}
                 </span>
               </div>
-              {shipping > 0 && <p style={{fontSize:12, color:'var(--mid)', marginBottom:8}}>Add ${(50 - total).toFixed(2)} for free shipping</p>}
+              {shipping > 0 && <p style={{fontSize:12, color:'var(--mid)', marginBottom:8}}>Add ₦{(50000 - total).toLocaleString('en-NG')} more for free shipping</p>}
               <div className="summary-total">
                 <span>Total</span>
-                <span>${(total + shipping).toFixed(2)}</span>
+                <span>₦{(total + shipping).toLocaleString('en-NG')}</span>
               </div>
               <Link to="/checkout" className="btn btn-primary btn-full btn-lg" style={{marginTop:20}}>
                 Proceed to Checkout →
