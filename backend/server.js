@@ -2,6 +2,7 @@ const express = require('express');
 const cors = require('cors');
 const jwt = require('jsonwebtoken');
 const sqlite3 = require('sqlite3').verbose();
+const bcrypt = require('bcryptjs');
 const path = require('path');
 
 const app = express();
@@ -33,11 +34,23 @@ db.serialize(() => {
   db.run(`CREATE TABLE IF NOT EXISTS subscribers (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     email TEXT UNIQUE NOT NULL, created_at TEXT DEFAULT (datetime('now')))`);
+  db.run(`CREATE TABLE IF NOT EXISTS users (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    first_name TEXT NOT NULL,
+    last_name TEXT NOT NULL,
+    email TEXT UNIQUE NOT NULL,
+    phone TEXT,
+    password TEXT NOT NULL,
+    address TEXT,
+    city TEXT,
+    state TEXT,
+    created_at TEXT DEFAULT (datetime('now')))`);
 });
 
 app.use(cors());
 app.use(express.json());
 
+// ── Middleware ────────────────────────────────────────────────────
 function requireAuth(req, res, next) {
   const auth = req.headers.authorization;
   if (!auth || !auth.startsWith('Bearer ')) return res.status(401).json({ error: 'Unauthorized' });
@@ -49,6 +62,20 @@ function requireAuth(req, res, next) {
   }
 }
 
+function requireUser(req, res, next) {
+  const auth = req.headers.authorization;
+  if (!auth || !auth.startsWith('Bearer ')) return res.status(401).json({ error: 'Please login' });
+  try {
+    const decoded = jwt.verify(auth.slice(7), JWT_SECRET);
+    if (decoded.role !== 'user') return res.status(403).json({ error: 'User access required' });
+    req.user = decoded;
+    next();
+  } catch {
+    res.status(401).json({ error: 'Invalid token' });
+  }
+}
+
+// ── Helpers ───────────────────────────────────────────────────────
 const dbAll = (sql, params = []) => new Promise((resolve, reject) =>
   db.all(sql, params, (err, rows) => err ? reject(err) : resolve(rows)));
 const dbGet = (sql, params = []) => new Promise((resolve, reject) =>
@@ -56,6 +83,7 @@ const dbGet = (sql, params = []) => new Promise((resolve, reject) =>
 const dbRun = (sql, params = []) => new Promise((resolve, reject) =>
   db.run(sql, params, function(err) { err ? reject(err) : resolve(this); }));
 
+// ── Admin Auth ────────────────────────────────────────────────────
 app.post('/api/auth/login', (req, res) => {
   const { username, password } = req.body;
   if (username === ADMIN_USER && password === ADMIN_PASS) {
@@ -66,6 +94,96 @@ app.post('/api/auth/login', (req, res) => {
   }
 });
 
+// ── User Auth ─────────────────────────────────────────────────────
+app.post('/api/user/register', async (req, res) => {
+  try {
+    const { first_name, last_name, email, phone, password } = req.body;
+    if (!first_name || !last_name || !email || !password)
+      return res.status(400).json({ error: 'First name, last name, email and password are required' });
+    if (password.length < 6)
+      return res.status(400).json({ error: 'Password must be at least 6 characters' });
+    const existing = await dbGet('SELECT id FROM users WHERE email = ?', [email]);
+    if (existing) return res.status(409).json({ error: 'Email already registered' });
+    const hashed = await bcrypt.hash(password, 10);
+    const result = await dbRun(
+      `INSERT INTO users (first_name, last_name, email, phone, password) VALUES (?, ?, ?, ?, ?)`,
+      [first_name, last_name, email, phone || null, hashed]
+    );
+    const token = jwt.sign({ id: result.lastID, email, role: 'user' }, JWT_SECRET, { expiresIn: '7d' });
+    res.status(201).json({ token, user: { id: result.lastID, first_name, last_name, email } });
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/user/login', async (req, res) => {
+  try {
+    const { email, password } = req.body;
+    if (!email || !password) return res.status(400).json({ error: 'Email and password required' });
+    const user = await dbGet('SELECT * FROM users WHERE email = ?', [email]);
+    if (!user) return res.status(401).json({ error: 'Invalid email or password' });
+    const match = await bcrypt.compare(password, user.password);
+    if (!match) return res.status(401).json({ error: 'Invalid email or password' });
+    const token = jwt.sign({ id: user.id, email: user.email, role: 'user' }, JWT_SECRET, { expiresIn: '7d' });
+    res.json({ token, user: { id: user.id, first_name: user.first_name, last_name: user.last_name, email: user.email } });
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+app.get('/api/user/profile', requireUser, async (req, res) => {
+  try {
+    const user = await dbGet('SELECT id, first_name, last_name, email, phone, address, city, state, created_at FROM users WHERE id = ?', [req.user.id]);
+    if (!user) return res.status(404).json({ error: 'User not found' });
+    res.json(user);
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+app.put('/api/user/profile', requireUser, async (req, res) => {
+  try {
+    const { first_name, last_name, phone, address, city, state } = req.body;
+    await dbRun(
+      `UPDATE users SET first_name=?, last_name=?, phone=?, address=?, city=?, state=? WHERE id=?`,
+      [first_name, last_name, phone, address, city, state, req.user.id]
+    );
+    const user = await dbGet('SELECT id, first_name, last_name, email, phone, address, city, state FROM users WHERE id = ?', [req.user.id]);
+    res.json(user);
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+app.put('/api/user/password', requireUser, async (req, res) => {
+  try {
+    const { current_password, new_password } = req.body;
+    if (!current_password || !new_password) return res.status(400).json({ error: 'Both passwords required' });
+    if (new_password.length < 6) return res.status(400).json({ error: 'New password must be at least 6 characters' });
+    const user = await dbGet('SELECT * FROM users WHERE id = ?', [req.user.id]);
+    const match = await bcrypt.compare(current_password, user.password);
+    if (!match) return res.status(401).json({ error: 'Current password is incorrect' });
+    const hashed = await bcrypt.hash(new_password, 10);
+    await dbRun('UPDATE users SET password = ? WHERE id = ?', [hashed, req.user.id]);
+    res.json({ message: 'Password updated successfully' });
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+app.get('/api/user/orders', requireUser, async (req, res) => {
+  try {
+    const orders = await dbAll(
+      'SELECT * FROM orders WHERE customer_email = ? ORDER BY created_at DESC',
+      [req.user.email]
+    );
+    res.json(orders);
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+app.get('/api/user/orders/:id', requireUser, async (req, res) => {
+  try {
+    const order = await dbGet('SELECT * FROM orders WHERE id = ? AND customer_email = ?', [req.params.id, req.user.email]);
+    if (!order) return res.status(404).json({ error: 'Order not found' });
+    const items = await dbAll(
+      `SELECT oi.*, p.name, p.image_url FROM order_items oi LEFT JOIN products p ON p.id = oi.product_id WHERE oi.order_id = ?`,
+      [req.params.id]
+    );
+    res.json({ ...order, items });
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+// ── Products ──────────────────────────────────────────────────────
 app.get('/api/products', async (req, res) => {
   try {
     const { category, min_price, max_price, sort, featured } = req.query;
@@ -126,6 +244,7 @@ app.delete('/api/products/:id', requireAuth, async (req, res) => {
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
+// ── Orders ────────────────────────────────────────────────────────
 app.post('/api/orders', async (req, res) => {
   try {
     const { customer_name, customer_email, shipping_address, items } = req.body;
@@ -181,6 +300,7 @@ app.patch('/api/orders/:id/status', requireAuth, async (req, res) => {
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
+// ── Subscribers ───────────────────────────────────────────────────
 app.post('/api/subscribers', async (req, res) => {
   try {
     const { email } = req.body;
@@ -195,19 +315,22 @@ app.get('/api/subscribers', requireAuth, async (req, res) => {
   catch (e) { res.status(500).json({ error: e.message }); }
 });
 
+// ── Stats ─────────────────────────────────────────────────────────
 app.get('/api/stats', requireAuth, async (req, res) => {
   try {
-    const [p, o, s, r, pending] = await Promise.all([
+    const [p, o, s, r, pending, u] = await Promise.all([
       dbGet('SELECT COUNT(*) as c FROM products'),
       dbGet('SELECT COUNT(*) as c FROM orders'),
       dbGet('SELECT COUNT(*) as c FROM subscribers'),
       dbGet("SELECT COALESCE(SUM(total_amount),0) as r FROM orders WHERE status != 'Cancelled'"),
-      dbGet("SELECT COUNT(*) as c FROM orders WHERE status = 'Pending'")
+      dbGet("SELECT COUNT(*) as c FROM orders WHERE status = 'Pending'"),
+      dbGet('SELECT COUNT(*) as c FROM users')
     ]);
-    res.json({ total_products: p.c, total_orders: o.c, total_subscribers: s.c, total_revenue: r.r, pending_orders: pending.c });
+    res.json({ total_products: p.c, total_orders: o.c, total_subscribers: s.c, total_revenue: r.r, pending_orders: pending.c, total_users: u.c });
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
+// ── Categories ────────────────────────────────────────────────────
 app.get('/api/categories', async (req, res) => {
   try {
     const rows = await dbAll('SELECT DISTINCT category FROM products ORDER BY category');
