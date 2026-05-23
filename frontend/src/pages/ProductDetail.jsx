@@ -60,8 +60,8 @@ export default function ProductDetail() {
 
               <div className="product-price-row">
                 <span className="product-price-main">₦{displayPrice.toLocaleString('en-NG')}</span>
-{product.sale_price && <>
-  <span className="product-price-original">₦{product.price.toLocaleString('en-NG')}</span>
+                {product.sale_price && <>
+                  <span className="product-price-original">₦{product.price.toLocaleString('en-NG')}</span>
                   <span className="product-save">Save {savings}%</span>
                 </>}
               </div>
@@ -93,6 +93,7 @@ export default function ProductDetail() {
                   <div style={{fontSize:13}}><strong>Category:</strong> {product.category}</div>
                   <div style={{fontSize:13}}><strong>Stock:</strong> {product.stock_quantity} units</div>
                   <div style={{fontSize:13}}><strong>SKU:</strong> PT-{String(product.id).padStart(4,'0')}</div>
+                  <div style={{fontSize:13}}><strong>Price:</strong> ₦{displayPrice.toLocaleString('en-NG')}</div>
                 </div>
               </div>
             </div>
