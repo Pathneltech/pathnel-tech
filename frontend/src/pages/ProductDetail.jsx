@@ -59,9 +59,9 @@ export default function ProductDetail() {
               <h1>{product.name}</h1>
 
               <div className="product-price-row">
-                <span className="product-price-main">${displayPrice.toFixed(2)}</span>
-                {product.sale_price && <>
-                  <span className="product-price-original">${product.price.toFixed(2)}</span>
+                <span className="product-price-main">₦{displayPrice.toLocaleString('en-NG')}</span>
+{product.sale_price && <>
+  <span className="product-price-original">₦{product.price.toLocaleString('en-NG')}</span>
                   <span className="product-save">Save {savings}%</span>
                 </>}
               </div>
