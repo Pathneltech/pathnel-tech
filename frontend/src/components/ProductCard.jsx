@@ -25,8 +25,8 @@ export default function ProductCard({ product }) {
         <div className="product-card-category">{product.category}</div>
         <div className="product-card-name">{product.name}</div>
         <div className="product-card-price">
-          <span className="price-current">${displayPrice.toFixed(2)}</span>
-          {product.sale_price && <span className="price-original">${product.price.toFixed(2)}</span>}
+          <span className="price-current">₦{displayPrice.toLocaleString('en-NG')}</span>
+{product.sale_price && <span className="price-original">₦{product.price.toLocaleString('en-NG')}</span>}
         </div>
       </div>
       <div className="product-card-footer">
