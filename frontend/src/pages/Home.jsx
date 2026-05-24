@@ -3,6 +3,17 @@ import { Link } from 'react-router-dom';
 import { api } from '../api';
 import { useCart } from '../context/CartContext';
 
+// Hook to detect mobile
+function useIsMobile() {
+  const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
+  useEffect(() => {
+    const handler = () => setIsMobile(window.innerWidth <= 768);
+    window.addEventListener('resize', handler);
+    return () => window.removeEventListener('resize', handler);
+  }, []);
+  return isMobile;
+}
+
 // Flipping Product Card
 function FlipCard({ product }) {
   const [flipped, setFlipped] = useState(false);
@@ -12,11 +23,7 @@ function FlipCard({ product }) {
   return (
     <div
       onClick={() => setFlipped(f => !f)}
-      style={{
-        perspective: '1000px', cursor: 'pointer',
-        height: 320, borderRadius: 16, flexShrink: 0,
-        width: '100%'
-      }}
+      style={{ perspective: '1000px', cursor: 'pointer', height: 300, borderRadius: 16, width: '100%' }}
     >
       <div style={{
         position: 'relative', width: '100%', height: '100%',
@@ -31,25 +38,25 @@ function FlipCard({ product }) {
           background: 'white', boxShadow: '0 4px 24px rgba(0,0,0,0.08)',
           border: '1px solid var(--border)'
         }}>
-          <div style={{ position: 'relative', height: 200, overflow: 'hidden' }}>
+          <div style={{ position: 'relative', height: 180, overflow: 'hidden' }}>
             <img src={product.image_url} alt={product.name}
-              style={{ width: '100%', height: '100%', objectFit: 'cover', transition: 'transform 0.4s' }} />
-            <div style={{ position: 'absolute', top: 10, left: 10, display: 'flex', gap: 6 }}>
+              style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+            <div style={{ position: 'absolute', top: 8, left: 8, display: 'flex', gap: 4 }}>
               {product.is_sale ? <span className="badge badge-sale">Sale</span> : null}
               {product.is_new ? <span className="badge badge-new">New</span> : null}
             </div>
             <div style={{
-              position: 'absolute', bottom: 10, right: 10,
+              position: 'absolute', bottom: 8, right: 8,
               background: 'rgba(0,0,0,0.6)', color: 'white',
-              fontSize: 11, padding: '4px 8px', borderRadius: 20
+              fontSize: 10, padding: '3px 7px', borderRadius: 20
             }}>Tap to flip 👆</div>
           </div>
-          <div style={{ padding: '12px 16px' }}>
-            <div style={{ fontSize: 11, color: 'var(--mid)', marginBottom: 4, textTransform: 'uppercase', letterSpacing: 1 }}>{product.category}</div>
-            <div style={{ fontWeight: 700, fontSize: 14, lineHeight: 1.3, marginBottom: 8 }}>{product.name}</div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-              <span style={{ fontWeight: 800, fontSize: 16, color: 'var(--green)' }}>₦{displayPrice.toLocaleString('en-NG')}</span>
-              {product.sale_price && <span style={{ fontSize: 12, color: 'var(--mid)', textDecoration: 'line-through' }}>₦{product.price.toLocaleString('en-NG')}</span>}
+          <div style={{ padding: '10px 14px' }}>
+            <div style={{ fontSize: 10, color: 'var(--mid)', marginBottom: 3, textTransform: 'uppercase', letterSpacing: 1 }}>{product.category}</div>
+            <div style={{ fontWeight: 700, fontSize: 13, lineHeight: 1.3, marginBottom: 6 }}>{product.name}</div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+              <span style={{ fontWeight: 800, fontSize: 14, color: 'var(--green)' }}>₦{displayPrice.toLocaleString('en-NG')}</span>
+              {product.sale_price && <span style={{ fontSize: 11, color: 'var(--mid)', textDecoration: 'line-through' }}>₦{product.price.toLocaleString('en-NG')}</span>}
             </div>
           </div>
         </div>
@@ -61,28 +68,28 @@ function FlipCard({ product }) {
           background: 'linear-gradient(135deg, #0f172a 0%, #1e3a2f 100%)',
           display: 'flex', flexDirection: 'column',
           justifyContent: 'center', alignItems: 'center',
-          padding: 24, boxShadow: '0 4px 24px rgba(0,0,0,0.15)'
+          padding: 20, boxShadow: '0 4px 24px rgba(0,0,0,0.15)'
         }}>
           <img src={product.image_url} alt={product.name}
-            style={{ width: 80, height: 80, objectFit: 'cover', borderRadius: 12, marginBottom: 14, border: '2px solid var(--green)' }} />
-          <div style={{ color: 'white', fontWeight: 700, fontSize: 14, textAlign: 'center', marginBottom: 8 }}>{product.name}</div>
-          <div style={{ color: 'rgba(255,255,255,0.6)', fontSize: 12, textAlign: 'center', marginBottom: 16, lineHeight: 1.5 }}>
-            {product.description?.slice(0, 80)}...
+            style={{ width: 64, height: 64, objectFit: 'cover', borderRadius: 10, marginBottom: 10, border: '2px solid var(--green)' }} />
+          <div style={{ color: 'white', fontWeight: 700, fontSize: 13, textAlign: 'center', marginBottom: 6 }}>{product.name}</div>
+          <div style={{ color: 'rgba(255,255,255,0.6)', fontSize: 11, textAlign: 'center', marginBottom: 12, lineHeight: 1.5 }}>
+            {product.description?.slice(0, 70)}...
           </div>
-          <div style={{ color: 'var(--green)', fontWeight: 800, fontSize: 18, marginBottom: 16 }}>
+          <div style={{ color: 'var(--green)', fontWeight: 800, fontSize: 16, marginBottom: 12 }}>
             ₦{displayPrice.toLocaleString('en-NG')}
           </div>
-          <div style={{ display: 'flex', gap: 8, width: '100%' }}>
+          <div style={{ display: 'flex', gap: 6, width: '100%' }}>
             <button
               onClick={e => { e.stopPropagation(); dispatch({ type: 'ADD', product, qty: 1 }); }}
               className="btn btn-primary btn-sm"
-              style={{ flex: 1, fontSize: 12 }}
-            >🛒 Add to Cart</button>
+              style={{ flex: 1, fontSize: 11 }}
+            >🛒 Add</button>
             <Link
               to={`/product/${product.id}`}
               onClick={e => e.stopPropagation()}
               className="btn btn-sm"
-              style={{ flex: 1, fontSize: 12, background: 'rgba(255,255,255,0.1)', color: 'white', border: '1px solid rgba(255,255,255,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+              style={{ flex: 1, fontSize: 11, background: 'rgba(255,255,255,0.1)', color: 'white', border: '1px solid rgba(255,255,255,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
             >View →</Link>
           </div>
         </div>
@@ -96,8 +103,8 @@ function CategoryCard({ name, image, count, icon }) {
   return (
     <Link to={`/shop?category=${name}`} style={{ textDecoration: 'none' }}>
       <div style={{
-        position: 'relative', borderRadius: 16, overflow: 'hidden',
-        height: 160, cursor: 'pointer',
+        position: 'relative', borderRadius: 14, overflow: 'hidden',
+        height: 140, cursor: 'pointer',
         boxShadow: '0 4px 16px rgba(0,0,0,0.1)',
         transition: 'transform 0.2s',
       }}
@@ -109,11 +116,11 @@ function CategoryCard({ name, image, count, icon }) {
           position: 'absolute', inset: 0,
           background: 'linear-gradient(to top, rgba(0,0,0,0.75) 0%, rgba(0,0,0,0.1) 60%)',
           display: 'flex', flexDirection: 'column',
-          justifyContent: 'flex-end', padding: 16
+          justifyContent: 'flex-end', padding: 12
         }}>
-          <div style={{ fontSize: 20, marginBottom: 4 }}>{icon}</div>
-          <div style={{ color: 'white', fontWeight: 700, fontSize: 15 }}>{name}</div>
-          <div style={{ color: 'rgba(255,255,255,0.7)', fontSize: 12 }}>{count} products</div>
+          <div style={{ fontSize: 18, marginBottom: 2 }}>{icon}</div>
+          <div style={{ color: 'white', fontWeight: 700, fontSize: 13 }}>{name}</div>
+          <div style={{ color: 'rgba(255,255,255,0.7)', fontSize: 11 }}>{count} products</div>
         </div>
       </div>
     </Link>
@@ -121,8 +128,8 @@ function CategoryCard({ name, image, count, icon }) {
 }
 
 export default function Home() {
+  const isMobile = useIsMobile();
   const [featured, setFeatured] = useState([]);
-  const [newArrivals, setNewArrivals] = useState([]);
   const [onSale, setOnSale] = useState([]);
   const [email, setEmail] = useState('');
   const [subMsg, setSubMsg] = useState('');
@@ -134,30 +141,26 @@ export default function Home() {
       highlight: 'Your Lifestyle',
       sub: 'Discover premium accessories, peripherals, and gadgets built for performance.',
       img: 'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=800&q=80',
-      cta: 'Shop Audio',
-      link: '/shop?category=Audio'
+      cta: 'Shop Audio', link: '/shop?category=Audio'
     },
     {
       title: 'Power Up Your',
       highlight: 'Workspace',
       sub: 'Pro-grade keyboards, monitors, and accessories for maximum productivity.',
       img: 'https://images.unsplash.com/photo-1511467687858-23d96c32e4ae?w=800&q=80',
-      cta: 'Shop Keyboards',
-      link: '/shop?category=Keyboards'
+      cta: 'Shop Keyboards', link: '/shop?category=Keyboards'
     },
     {
       title: 'Game Stronger,',
       highlight: 'Play Smarter',
       sub: 'High-performance gaming mice, headsets, and gear designed for winners.',
       img: 'https://images.unsplash.com/photo-1527864550417-7fd91fc51a46?w=800&q=80',
-      cta: 'Shop Gaming',
-      link: '/shop?category=Mice'
+      cta: 'Shop Gaming', link: '/shop?category=Mice'
     }
   ];
 
   useEffect(() => {
     api.products('?featured=1').then(setFeatured).catch(console.error);
-    api.products('?sort=price_asc').then(d => setNewArrivals(d.filter(p => p.is_new).slice(0, 8))).catch(console.error);
     api.products('').then(d => setOnSale(d.filter(p => p.is_sale).slice(0, 4))).catch(console.error);
   }, []);
 
@@ -172,9 +175,7 @@ export default function Home() {
       await api.subscribe(email);
       setSubMsg('🎉 Welcome to the Pathnel Tech family!');
       setEmail('');
-    } catch {
-      setSubMsg('Already subscribed or invalid email.');
-    }
+    } catch { setSubMsg('Already subscribed or invalid email.'); }
     setTimeout(() => setSubMsg(''), 4000);
   }
 
@@ -194,77 +195,96 @@ export default function Home() {
     <>
       {/* ── HERO ─────────────────────────────────────────────── */}
       <section style={{
-        position: 'relative', minHeight: '92vh',
+        position: 'relative',
         background: 'linear-gradient(135deg, #0a0f1e 0%, #0d2818 60%, #0a1628 100%)',
-        display: 'flex', alignItems: 'center', overflow: 'hidden'
+        overflow: 'hidden', paddingTop: isMobile ? 48 : 80, paddingBottom: isMobile ? 48 : 80
       }}>
         {/* Background image */}
         <div style={{
           position: 'absolute', inset: 0, zIndex: 0,
           backgroundImage: `url(${slide.img})`,
-          backgroundSize: 'cover', backgroundPosition: 'center',
-          opacity: 0.12, transition: 'background-image 0.8s'
+          backgroundSize: 'cover', backgroundPosition: 'center', opacity: 0.1
         }} />
-
-        {/* Floating blobs */}
         <div style={{ position: 'absolute', top: '10%', right: '5%', width: 300, height: 300, borderRadius: '50%', background: 'radial-gradient(circle, rgba(34,197,94,0.15) 0%, transparent 70%)', zIndex: 0 }} />
         <div style={{ position: 'absolute', bottom: '10%', left: '5%', width: 200, height: 200, borderRadius: '50%', background: 'radial-gradient(circle, rgba(59,130,246,0.1) 0%, transparent 70%)', zIndex: 0 }} />
 
-        <div className="container" style={{ position: 'relative', zIndex: 1, paddingTop: 80, paddingBottom: 80 }}>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 48, alignItems: 'center' }}>
-
+        <div className="container" style={{ position: 'relative', zIndex: 1 }}>
+          <div style={{
+            display: 'grid',
+            gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr',
+            gap: isMobile ? 32 : 48,
+            alignItems: 'center'
+          }}>
             {/* Left: Text */}
             <div>
               <div style={{
                 display: 'inline-flex', alignItems: 'center', gap: 8,
                 background: 'rgba(34,197,94,0.15)', border: '1px solid rgba(34,197,94,0.3)',
-                color: 'var(--green)', padding: '6px 14px', borderRadius: 20, fontSize: 13,
-                fontWeight: 600, marginBottom: 24
-              }}>
-                ✦ New Season Arrivals
-              </div>
+                color: 'var(--green)', padding: '6px 14px', borderRadius: 20,
+                fontSize: 12, fontWeight: 600, marginBottom: 20
+              }}>✦ New Season Arrivals</div>
 
               <h1 style={{
-                fontSize: 'clamp(36px, 5vw, 64px)', fontWeight: 800,
-                color: 'white', lineHeight: 1.1, marginBottom: 20
+                fontSize: isMobile ? 'clamp(32px, 9vw, 48px)' : 'clamp(36px, 4vw, 60px)',
+                fontWeight: 800, color: 'white', lineHeight: 1.1, marginBottom: 16
               }}>
                 {slide.title}<br />
                 <span style={{ color: 'var(--green)' }}>{slide.highlight}</span>
               </h1>
 
-              <p style={{ color: 'rgba(255,255,255,0.7)', fontSize: 'clamp(15px, 1.5vw, 18px)', lineHeight: 1.7, marginBottom: 32, maxWidth: 480 }}>
+              <p style={{ color: 'rgba(255,255,255,0.7)', fontSize: isMobile ? 14 : 16, lineHeight: 1.7, marginBottom: 28, maxWidth: 480 }}>
                 {slide.sub}
               </p>
 
-              <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap', marginBottom: 40 }}>
-                <Link to={slide.link} className="btn btn-primary btn-lg">{slide.cta} →</Link>
-                <Link to="/shop" className="btn btn-lg" style={{ background: 'rgba(255,255,255,0.1)', color: 'white', border: '1px solid rgba(255,255,255,0.2)', backdropFilter: 'blur(10px)' }}>
+              <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', marginBottom: 32 }}>
+                <Link to={slide.link} className="btn btn-primary" style={{ fontSize: isMobile ? 14 : 16, padding: isMobile ? '12px 20px' : '14px 28px' }}>
+                  {slide.cta} →
+                </Link>
+                <Link to="/shop" className="btn" style={{ background: 'rgba(255,255,255,0.1)', color: 'white', border: '1px solid rgba(255,255,255,0.2)', fontSize: isMobile ? 14 : 16, padding: isMobile ? '12px 20px' : '14px 28px' }}>
                   All Products
                 </Link>
               </div>
 
               {/* Stats */}
-              <div style={{ display: 'flex', gap: 32, flexWrap: 'wrap' }}>
+              <div style={{ display: 'flex', gap: isMobile ? 24 : 32 }}>
                 {[['100+', 'Products'], ['10k+', 'Customers'], ['4.9★', 'Rating']].map(([val, label]) => (
                   <div key={label}>
-                    <div style={{ color: 'white', fontWeight: 800, fontSize: 24 }}>{val}</div>
-                    <div style={{ color: 'rgba(255,255,255,0.5)', fontSize: 13 }}>{label}</div>
+                    <div style={{ color: 'white', fontWeight: 800, fontSize: isMobile ? 20 : 24 }}>{val}</div>
+                    <div style={{ color: 'rgba(255,255,255,0.5)', fontSize: 12 }}>{label}</div>
                   </div>
                 ))}
               </div>
             </div>
 
-            {/* Right: Flip Cards */}
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
-              {featured.slice(0, 4).map(p => <FlipCard key={p.id} product={p} />)}
-              {featured.length === 0 && [1,2,3,4].map(i => (
-                <div key={i} style={{ height: 320, borderRadius: 16, background: 'rgba(255,255,255,0.05)', animation: 'pulse 1.5s infinite' }} />
-              ))}
-            </div>
+            {/* Right: Flip Cards — hidden on mobile, shown on desktop */}
+            {!isMobile && (
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
+                {featured.slice(0, 4).map(p => <FlipCard key={p.id} product={p} />)}
+                {featured.length === 0 && [1,2,3,4].map(i => (
+                  <div key={i} style={{ height: 300, borderRadius: 16, background: 'rgba(255,255,255,0.05)' }} />
+                ))}
+              </div>
+            )}
           </div>
 
+          {/* Mobile: horizontal scroll cards */}
+          {isMobile && featured.length > 0 && (
+            <div style={{ marginTop: 32 }}>
+              <div style={{ fontSize: 13, color: 'rgba(255,255,255,0.6)', marginBottom: 12, fontWeight: 600 }}>
+                ✦ Featured Products — tap to flip
+              </div>
+              <div style={{ display: 'flex', gap: 12, overflowX: 'auto', paddingBottom: 8, scrollbarWidth: 'none' }}>
+                {featured.slice(0, 6).map(p => (
+                  <div key={p.id} style={{ minWidth: 180, flexShrink: 0 }}>
+                    <FlipCard product={p} />
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
           {/* Slide dots */}
-          <div style={{ display: 'flex', gap: 8, justifyContent: 'center', marginTop: 40 }}>
+          <div style={{ display: 'flex', gap: 8, justifyContent: 'center', marginTop: 32 }}>
             {heroSlides.map((_, i) => (
               <button key={i} onClick={() => setHeroSlide(i)} style={{
                 width: i === heroSlide ? 24 : 8, height: 8, borderRadius: 4,
@@ -277,19 +297,25 @@ export default function Home() {
       </section>
 
       {/* ── TRUST BAR ────────────────────────────────────────── */}
-      <div style={{ background: 'var(--dark)', borderBottom: '1px solid rgba(255,255,255,0.08)' }}>
+      <div style={{ background: 'var(--dark-2)', borderBottom: '1px solid rgba(255,255,255,0.08)' }}>
         <div className="container">
-          <div style={{ display: 'flex', justifyContent: 'space-around', flexWrap: 'wrap', gap: 16, padding: '18px 0' }}>
+          <div style={{
+            display: 'flex', justifyContent: isMobile ? 'flex-start' : 'space-around',
+            flexWrap: isMobile ? 'nowrap' : 'wrap',
+            gap: 16, padding: '14px 0',
+            overflowX: isMobile ? 'auto' : 'visible',
+            scrollbarWidth: 'none'
+          }}>
             {[
-              ['🚚', 'Free Shipping', 'On orders over ₦50,000'],
-              ['↩️', '30-Day Returns', 'Hassle-free guarantee'],
+              ['🚚', 'Free Shipping', 'Orders over ₦50,000'],
+              ['↩️', '30-Day Returns', 'Hassle-free'],
               ['🔒', 'Secure Payment', '100% protected'],
-              ['💬', '24/7 Support', 'Always here for you'],
+              ['💬', '24/7 Support', 'Always here'],
             ].map(([icon, title, sub]) => (
-              <div key={title} style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                <span style={{ fontSize: 22 }}>{icon}</span>
+              <div key={title} style={{ display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0 }}>
+                <span style={{ fontSize: 20 }}>{icon}</span>
                 <div>
-                  <div style={{ color: 'white', fontWeight: 600, fontSize: 13 }}>{title}</div>
+                  <div style={{ color: 'white', fontWeight: 600, fontSize: 12 }}>{title}</div>
                   <div style={{ color: 'rgba(255,255,255,0.5)', fontSize: 11 }}>{sub}</div>
                 </div>
               </div>
@@ -306,7 +332,7 @@ export default function Home() {
             <h2>Shop by Category</h2>
             <p>Find exactly what you need across our 7 tech categories.</p>
           </div>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(160px, 1fr))', gap: 16 }}>
+          <div style={{ display: 'grid', gridTemplateColumns: isMobile ? 'repeat(2, 1fr)' : 'repeat(auto-fill, minmax(160px, 1fr))', gap: 12 }}>
             {categories.map(cat => <CategoryCard key={cat.name} {...cat} />)}
           </div>
         </div>
@@ -326,7 +352,7 @@ export default function Home() {
             <div className="products-grid">
               {featured.slice(0, 8).map(p => (
                 <Link key={p.id} to={`/product/${p.id}`} style={{ textDecoration: 'none' }}>
-                  <div className="product-card" style={{ cursor: 'pointer' }}>
+                  <div className="product-card">
                     <div className="product-card-img">
                       <img src={p.image_url} alt={p.name} loading="lazy" />
                       <div className="product-card-badges">
@@ -354,21 +380,21 @@ export default function Home() {
       </section>
 
       {/* ── PROMO BANNER ─────────────────────────────────────── */}
-      <section style={{ background: 'linear-gradient(135deg, #0a0f1e 0%, #0d2818 100%)', padding: '64px 0' }}>
+      <section style={{ background: 'linear-gradient(135deg, #0a0f1e 0%, #0d2818 100%)', padding: isMobile ? '48px 0' : '64px 0' }}>
         <div className="container">
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 48, alignItems: 'center' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap: isMobile ? 32 : 48, alignItems: 'center' }}>
             <div>
               <div className="section-tag" style={{ background: 'rgba(34,197,94,0.15)', color: 'var(--green)', marginBottom: 16 }}>🔥 Limited Time Deals</div>
-              <h2 style={{ color: 'white', fontSize: 'clamp(28px, 3vw, 44px)', marginBottom: 16 }}>Boost Your Productivity 🚀</h2>
-              <p style={{ color: 'rgba(255,255,255,0.7)', lineHeight: 1.7, marginBottom: 28 }}>
+              <h2 style={{ color: 'white', fontSize: 'clamp(24px, 3vw, 40px)', marginBottom: 16 }}>Boost Your Productivity 🚀</h2>
+              <p style={{ color: 'rgba(255,255,255,0.7)', lineHeight: 1.7, marginBottom: 24, fontSize: isMobile ? 14 : 16 }}>
                 Upgrade your workspace with pro-grade peripherals. From mechanical keyboards to 4K monitors — everything your setup needs.
               </p>
-              <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
-                <Link to="/shop?category=Keyboards" className="btn btn-primary btn-lg">Shop Keyboards</Link>
-                <Link to="/shop?category=Monitors" className="btn btn-lg" style={{ background: 'rgba(255,255,255,0.1)', color: 'white', border: '1px solid rgba(255,255,255,0.2)' }}>View Monitors</Link>
+              <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
+                <Link to="/shop?category=Keyboards" className="btn btn-primary">Shop Keyboards</Link>
+                <Link to="/shop?category=Monitors" className="btn" style={{ background: 'rgba(255,255,255,0.1)', color: 'white', border: '1px solid rgba(255,255,255,0.2)' }}>View Monitors</Link>
               </div>
             </div>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
               {[
                 { icon: '⌨️', title: 'Mechanical Keyboards', sub: 'From ₦12,000', link: '/shop?category=Keyboards' },
                 { icon: '🖥️', title: '4K Monitors', sub: 'From ₦115,000', link: '/shop?category=Monitors' },
@@ -378,13 +404,13 @@ export default function Home() {
                 <Link key={item.title} to={item.link} style={{ textDecoration: 'none' }}>
                   <div style={{
                     background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)',
-                    borderRadius: 12, padding: 20, transition: 'background 0.2s',
+                    borderRadius: 12, padding: isMobile ? 14 : 20, transition: 'background 0.2s',
                   }}
                     onMouseEnter={e => e.currentTarget.style.background = 'rgba(34,197,94,0.1)'}
                     onMouseLeave={e => e.currentTarget.style.background = 'rgba(255,255,255,0.05)'}
                   >
-                    <div style={{ fontSize: 28, marginBottom: 8 }}>{item.icon}</div>
-                    <div style={{ color: 'white', fontWeight: 600, fontSize: 13, marginBottom: 4 }}>{item.title}</div>
+                    <div style={{ fontSize: 24, marginBottom: 6 }}>{item.icon}</div>
+                    <div style={{ color: 'white', fontWeight: 600, fontSize: 12, marginBottom: 3 }}>{item.title}</div>
                     <div style={{ color: 'var(--green)', fontSize: 12, fontWeight: 600 }}>{item.sub}</div>
                   </div>
                 </Link>
@@ -406,7 +432,7 @@ export default function Home() {
             <div className="products-grid">
               {onSale.map(p => (
                 <Link key={p.id} to={`/product/${p.id}`} style={{ textDecoration: 'none' }}>
-                  <div className="product-card" style={{ cursor: 'pointer' }}>
+                  <div className="product-card">
                     <div className="product-card-img">
                       <img src={p.image_url} alt={p.name} loading="lazy" />
                       <div className="product-card-badges">
@@ -441,27 +467,23 @@ export default function Home() {
             <h2>Why Shop With Us?</h2>
             <p>We're not just another tech store — we're your trusted tech partner.</p>
           </div>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))', gap: 24 }}>
+          <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr 1fr' : 'repeat(auto-fill, minmax(200px, 1fr))', gap: isMobile ? 12 : 24 }}>
             {[
-              { icon: '✅', title: 'Genuine Products', desc: 'Every product is 100% authentic, sourced directly from verified manufacturers.' },
-              { icon: '💰', title: 'Best Prices', desc: 'We price-match competitors so you always get the best deal on premium tech.' },
-              { icon: '🚀', title: 'Fast Delivery', desc: 'Same-day dispatch on orders before 2PM. Nationwide delivery in 1–3 days.' },
-              { icon: '🛡️', title: 'Warranty Support', desc: 'All products come with manufacturer warranty and our after-sales support.' },
-              { icon: '📱', title: 'Easy Returns', desc: '30-day hassle-free return policy — no questions asked.' },
-              { icon: '🌍', title: 'Nationwide', desc: 'We deliver to all 36 states in Nigeria including FCT Abuja.' },
+              { icon: '✅', title: 'Genuine Products', desc: '100% authentic products from verified manufacturers.' },
+              { icon: '💰', title: 'Best Prices', desc: 'Price-matched so you always get the best deal.' },
+              { icon: '🚀', title: 'Fast Delivery', desc: 'Same-day dispatch. Nationwide in 1–3 days.' },
+              { icon: '🛡️', title: 'Warranty', desc: 'Full manufacturer warranty on all products.' },
+              { icon: '📱', title: 'Easy Returns', desc: '30-day hassle-free return policy.' },
+              { icon: '🌍', title: 'Nationwide', desc: 'Deliver to all 36 states + FCT Abuja.' },
             ].map(item => (
               <div key={item.title} style={{
                 background: 'white', border: '1px solid var(--border)',
-                borderRadius: 16, padding: 24,
+                borderRadius: 14, padding: isMobile ? 16 : 24,
                 boxShadow: '0 2px 12px rgba(0,0,0,0.04)',
-                transition: 'transform 0.2s, box-shadow 0.2s'
-              }}
-                onMouseEnter={e => { e.currentTarget.style.transform = 'translateY(-4px)'; e.currentTarget.style.boxShadow = '0 8px 24px rgba(0,0,0,0.1)'; }}
-                onMouseLeave={e => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = '0 2px 12px rgba(0,0,0,0.04)'; }}
-              >
-                <div style={{ fontSize: 32, marginBottom: 12 }}>{item.icon}</div>
-                <div style={{ fontWeight: 700, fontSize: 15, marginBottom: 8 }}>{item.title}</div>
-                <div style={{ color: 'var(--mid)', fontSize: 13, lineHeight: 1.6 }}>{item.desc}</div>
+              }}>
+                <div style={{ fontSize: isMobile ? 24 : 32, marginBottom: 8 }}>{item.icon}</div>
+                <div style={{ fontWeight: 700, fontSize: isMobile ? 13 : 15, marginBottom: 6 }}>{item.title}</div>
+                <div style={{ color: 'var(--mid)', fontSize: isMobile ? 12 : 13, lineHeight: 1.5 }}>{item.desc}</div>
               </div>
             ))}
           </div>
@@ -476,27 +498,27 @@ export default function Home() {
             <h2>What Our Customers Say</h2>
             <p>Thousands of happy customers across Nigeria trust Pathnel Tech.</p>
           </div>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: 24 }}>
+          <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : 'repeat(auto-fill, minmax(280px, 1fr))', gap: isMobile ? 12 : 24 }}>
             {[
-              { name: 'Chukwuemeka A.', loc: 'Lagos', rating: 5, text: 'Got my mechanical keyboard in 2 days. Build quality is amazing and customer service was top notch. Will definitely order again!' },
-              { name: 'Fatima M.', loc: 'Abuja', rating: 5, text: 'The noise-cancelling headphones I ordered are incredible. Sound quality rivals brands 3x the price. Great value for money!' },
-              { name: 'Taiwo B.', loc: 'Port Harcourt', rating: 5, text: 'Fast delivery, genuine product, and great packaging. Pathnel Tech is now my go-to for all my tech needs.' },
-              { name: 'Adaeze O.', loc: 'Enugu', rating: 5, text: 'Ordered the 4K webcam for my YouTube channel. Image quality is stunning. Delivery was faster than expected!' },
-              { name: 'Ibrahim S.', loc: 'Kano', rating: 5, text: 'Best prices I could find anywhere in Nigeria. The gaming mouse is perfect and arrived well packaged.' },
-              { name: 'Ngozi K.', loc: 'Ibadan', rating: 5, text: 'Returned an item and got a replacement within 3 days no stress. Their customer service is genuinely excellent.' },
+              { name: 'Chukwuemeka A.', loc: 'Lagos', rating: 5, text: 'Got my mechanical keyboard in 2 days. Build quality is amazing and customer service was top notch!' },
+              { name: 'Fatima M.', loc: 'Abuja', rating: 5, text: 'The noise-cancelling headphones are incredible. Sound quality rivals brands 3x the price.' },
+              { name: 'Taiwo B.', loc: 'Port Harcourt', rating: 5, text: 'Fast delivery, genuine product, and great packaging. Pathnel Tech is now my go-to store.' },
+              { name: 'Adaeze O.', loc: 'Enugu', rating: 5, text: 'Ordered the 4K webcam for my YouTube channel. Image quality is stunning!' },
+              { name: 'Ibrahim S.', loc: 'Kano', rating: 5, text: 'Best prices I could find anywhere in Nigeria. The gaming mouse is perfect.' },
+              { name: 'Ngozi K.', loc: 'Ibadan', rating: 5, text: 'Returned an item and got a replacement within 3 days no stress. Excellent service!' },
             ].map((r, i) => (
               <div key={i} style={{
-                background: 'white', borderRadius: 16, padding: 24,
+                background: 'white', borderRadius: 14, padding: isMobile ? 16 : 24,
                 border: '1px solid var(--border)', boxShadow: '0 2px 12px rgba(0,0,0,0.04)'
               }}>
-                <div style={{ color: '#f59e0b', fontSize: 16, marginBottom: 12 }}>{'★'.repeat(r.rating)}</div>
-                <p style={{ color: 'var(--dark)', fontSize: 14, lineHeight: 1.7, marginBottom: 16, fontStyle: 'italic' }}>"{r.text}"</p>
+                <div style={{ color: '#f59e0b', fontSize: 14, marginBottom: 10 }}>{'★'.repeat(r.rating)}</div>
+                <p style={{ color: 'var(--dark)', fontSize: 13, lineHeight: 1.7, marginBottom: 14, fontStyle: 'italic' }}>"{r.text}"</p>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                  <div style={{ width: 40, height: 40, borderRadius: '50%', background: 'var(--green)', color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700, fontSize: 16 }}>
+                  <div style={{ width: 36, height: 36, borderRadius: '50%', background: 'var(--green)', color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700, fontSize: 14, flexShrink: 0 }}>
                     {r.name[0]}
                   </div>
                   <div>
-                    <div style={{ fontWeight: 700, fontSize: 14 }}>{r.name}</div>
+                    <div style={{ fontWeight: 700, fontSize: 13 }}>{r.name}</div>
                     <div style={{ color: 'var(--mid)', fontSize: 12 }}>{r.loc}, Nigeria</div>
                   </div>
                 </div>
@@ -507,26 +529,26 @@ export default function Home() {
       </section>
 
       {/* ── NEWSLETTER ───────────────────────────────────────── */}
-      <section style={{ background: 'linear-gradient(135deg, #0a0f1e 0%, #0d2818 100%)', padding: '80px 0' }}>
+      <section style={{ background: 'linear-gradient(135deg, #0a0f1e 0%, #0d2818 100%)', padding: isMobile ? '56px 0' : '80px 0' }}>
         <div className="container">
-          <div style={{ textAlign: 'center', maxWidth: 560, margin: '0 auto' }}>
+          <div style={{ textAlign: 'center', maxWidth: 520, margin: '0 auto', padding: '0 16px' }}>
             <div className="section-tag" style={{ background: 'rgba(34,197,94,0.15)', color: 'var(--green)', display: 'inline-block', marginBottom: 16 }}>📬 Newsletter</div>
-            <h2 style={{ color: 'white', fontSize: 'clamp(28px, 3vw, 40px)', marginBottom: 16 }}>Get Exclusive Deals</h2>
-            <p style={{ color: 'rgba(255,255,255,0.7)', marginBottom: 32, lineHeight: 1.7 }}>
-              Join 10,000+ tech enthusiasts. Get early access to sales, new arrivals, and tech tips — zero spam.
+            <h2 style={{ color: 'white', fontSize: 'clamp(24px, 3vw, 38px)', marginBottom: 14 }}>Get Exclusive Deals</h2>
+            <p style={{ color: 'rgba(255,255,255,0.7)', marginBottom: 28, lineHeight: 1.7, fontSize: isMobile ? 14 : 16 }}>
+              Join 10,000+ tech enthusiasts. Early access to sales, new arrivals, and zero spam.
             </p>
-            <form onSubmit={handleSubscribe} style={{ display: 'flex', gap: 12, maxWidth: 440, margin: '0 auto', flexWrap: 'wrap' }}>
+            <form onSubmit={handleSubscribe} style={{ display: 'flex', gap: 10, maxWidth: 440, margin: '0 auto', flexDirection: isMobile ? 'column' : 'row' }}>
               <input
                 type="email"
                 placeholder="Enter your email address"
                 value={email}
                 onChange={e => setEmail(e.target.value)}
                 required
-                style={{ flex: 1, minWidth: 200, padding: '14px 18px', borderRadius: 10, border: '1px solid rgba(255,255,255,0.2)', background: 'rgba(255,255,255,0.08)', color: 'white', fontSize: 14, outline: 'none' }}
+                style={{ flex: 1, padding: '13px 16px', borderRadius: 10, border: '1px solid rgba(255,255,255,0.2)', background: 'rgba(255,255,255,0.08)', color: 'white', fontSize: 14, outline: 'none' }}
               />
-              <button type="submit" className="btn btn-primary btn-lg">Subscribe →</button>
+              <button type="submit" className="btn btn-primary" style={{ whiteSpace: 'nowrap' }}>Subscribe →</button>
             </form>
-            {subMsg && <p style={{ marginTop: 16, color: 'var(--green)', fontSize: 14 }}>{subMsg}</p>}
+            {subMsg && <p style={{ marginTop: 14, color: 'var(--green)', fontSize: 14 }}>{subMsg}</p>}
           </div>
         </div>
       </section>
